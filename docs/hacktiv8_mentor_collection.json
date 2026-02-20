@@ -1,7 +1,7 @@
 {
     "_type": "export",
     "__export_format": 4,
-    "__export_date": "2026-02-20T12:35:00.000Z",
+    "__export_date": "2026-02-20T13:20:00.000Z",
     "resources": [
         {
             "_id": "wrk_tech_support",
@@ -9,7 +9,7 @@
             "modified": 1708430760000,
             "created": 1708430760000,
             "name": "Technical Support AI Bot API",
-            "description": "API documentation for the Technical Support AI Bot",
+            "description": "API documentation for the Technical Support AI Bot (Internal Company Support)",
             "scope": "collection",
             "_type": "workspace"
         },
@@ -24,10 +24,10 @@
         },
         {
             "_id": "req_generate_tech",
-            "parentId": "wrk_hacktiv8_mentor",
+            "parentId": "wrk_tech_support",
             "url": "{{ _.base_url }}/generate-text",
             "name": "Generate Support Response",
-            "description": "Endpoint utama untuk berinteraksi dengan Technical Support AI.",
+            "description": "Endpoint utama untuk berinteraksi dengan Technical Support AI. Response kini menyertakan `aiResponse` untuk debugging detail.",
             "method": "POST",
             "body": {
                 "mimeType": "application/json",
@@ -37,7 +37,7 @@
         },
         {
             "_id": "req_health_check",
-            "parentId": "wrk_hacktiv8_mentor",
+            "parentId": "wrk_tech_support",
             "url": "{{ _.base_url }}/api/health",
             "name": "System Health Check",
             "method": "GET",
