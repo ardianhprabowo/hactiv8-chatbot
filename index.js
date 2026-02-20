@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -13,8 +13,30 @@ const __dirname = path.dirname(__filename);
 // setup aplikasi
 const app = express();
 
-// setup AI agent-nya dengan Google Gemini API
-const ai = new GoogleGenAI({});
+// setup AI agent-nya dengan Google Gemini API resmi
+const rawApiKey = process.env.GEMINI_API_KEY;
+const apiKey = rawApiKey ? rawApiKey.trim() : null;
+
+if (apiKey) {
+  console.log(`API Key loaded: ${apiKey.substring(0, 7)}... (Length: ${apiKey.length})`);
+} else {
+  console.log("API Key NOT FOUND in .env");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
+
+// Tes koneksi otomatis saat startup (Internal Diagnostics)
+(async () => {
+  try {
+    if (!apiKey) return;
+    const testModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    await testModel.generateContent("ping");
+    console.log("✅ Startup API Check: SUCCESS");
+  } catch (e) {
+    console.log("❌ Startup API Check: FAILED");
+    console.error("Reason:", e.message);
+  }
+})();
 
 // setup middleware
 const upload = multer();
@@ -51,16 +73,21 @@ app.post("/api/chat", async (req, res) => {
     }
 
     // Initialize model with enhanced tech support persona
-    const model = ai.getGenerativeModel({
+    const model = genAI.getGenerativeModel({
       model: "gemini-2.0-flash",
       systemInstruction: "Anda adalah Technical Support Specialist yang sangat manusiawi, berempati, dan proaktif. Anda bukan sekadar bot, melainkan rekan teknis yang cerdas. Tugas Anda:\n1. Selesaikan masalah teknis (troubleshooting) secara akurat dan step-by-step.\n2. Pelajari konteks dari riwayat percakapan. Jika pengguna menanyakan hal yang serupa atau berkaitan, hubungkan jawaban Anda dengan topik sebelumnya secara natural.\n3. Berikan saran proaktif atau tips tambahan yang relevan dengan pertanyaan pengguna untuk mencegah masalah di masa depan.\n4. Gunakan gaya bahasa yang profesional namun hangat dan mengayomi (seperti mentor/senior dev). Hindari jawaban yang terlalu kaku atau repetitif.\n5. Selalu tutup jawaban Anda dengan pertanyaan yang memotivasi atau follow-up teknis untuk memastikan bantuan Anda sudah tuntas."
     });
 
     // Start a chat session with the provided history (excluding the latest message)
-    const history = messages.slice(0, -1).map(m => ({
+    let history = messages.slice(0, -1).map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content || m.text }]
     }));
+
+    // Safeguard: Gemini API mewajibkan pesan pertama di history harus dari 'user'
+    while (history.length > 0 && history[0].role !== 'user') {
+      history.shift();
+    }
 
     const chat = model.startChat({
       history: history,
@@ -84,7 +111,13 @@ app.post("/api/chat", async (req, res) => {
     });
   } catch (error) {
     console.error("AI Error:", error);
-    res.status(500).json({ success: false, error: "Gagal memproses AI." });
+    // Mengembalikan pesan error yang lebih detail agar user tahu jika terkena limit kuota
+    const errorMessage = error.message || "Gagal memproses AI.";
+    res.status(500).json({
+      success: false,
+      error: errorMessage,
+      details: error.toString()
+    });
   }
 });
 
@@ -100,7 +133,7 @@ app.post("/api/generate-image", async (req, res) => {
 
     // Menggunakan model Gemini 2.0 Flash untuk image generation (jika didukung)
     // Atau fallback ke skema generateContent khusus
-    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.0-flash" });
 
     // Note: Native image generation might require specific parameters or model variations
     // This is a standard implementation assuming current SDK support
@@ -137,7 +170,7 @@ app.post("/generate-text-from-image", upload.single("image"), async (req, res) =
     const file = req.file;
     if (!file) return res.status(400).json({ error: "Gambar wajib diunggah." });
     const base64File = file.buffer.toString("base64");
-    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.0-flash" });
     const result = await model.generateContent({
       contents: [{
         role: 'user', parts: [
@@ -160,5 +193,5 @@ app.get(/(.*)/, (req, res) => {
 
 // kita "dengarkan" request dari user
 app.listen(23000, () => {
-  console.log("I LOVE YOU 23000 - Hacktiv8 Mentor AI is Online");
+  console.log("Port 23000 - Internal TS AI is Online");
 });

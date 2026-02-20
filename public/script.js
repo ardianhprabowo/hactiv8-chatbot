@@ -65,7 +65,9 @@ form.addEventListener('submit', async function (e) {
             // Simpan balasan bot ke riwayat lokal
             chatMessages.push({ role: 'model', content: botResponse });
         } else {
-            appendMessage('bot', 'Maaf, saya sedang mengalami kendala teknis. Harap coba lagi nanti.');
+            // Tampilkan pesan error detail dari backend jika tersedia
+            const errorMsg = data.error || 'Maaf, saya sedang mengalami kendala teknis.';
+            appendMessage('bot', `⚠️ **Technical Error:** ${errorMsg}\n\n*Jika ini adalah error 'Quota Exceeded', harap tunggu beberapa menit atau gunakan API Key lain.*`);
         }
     } catch (error) {
         removeMessageById(loadingId);
