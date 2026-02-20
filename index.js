@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -17,6 +18,7 @@ const ai = new GoogleGenAI({});
 
 // setup middleware
 const upload = multer();
+app.use(cors()); // Aktifkan CORS untuk semua origin
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
