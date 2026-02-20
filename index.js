@@ -34,6 +34,9 @@ app.post("/generate-text", async (req, res) => {
   try {
     const { message, history } = req.body;
 
+    // Log request body as stringified JSON
+    console.log("Incoming Request:", JSON.stringify(req.body, null, 2));
+
     if (!message) {
       return res.status(400).json({ error: "Pesan (message) wajib diisi." });
     }
@@ -51,7 +54,14 @@ app.post("/generate-text", async (req, res) => {
       }
     });
 
-    res.json({ success: true, text: aiResponse.text });
+    // Log full AI response as stringified JSON
+    console.log("AI Response Object:", JSON.stringify(aiResponse, null, 2));
+
+    res.json({
+      success: true,
+      text: aiResponse.text,
+      aiResponse: aiResponse // Kirim full response object ke client
+    });
   } catch (error) {
     console.error("AI Error:", error);
     res.status(500).json({ success: false, error: "Gagal memproses AI." });
