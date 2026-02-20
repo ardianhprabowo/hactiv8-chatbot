@@ -8,6 +8,9 @@ const input = document.getElementById('user-input');
 const chatBox = document.getElementById('chat-box');
 const sendBtn = document.getElementById('send-btn');
 
+// Variabel untuk menyimpan riwayat percakapan (client-side memory)
+let chatHistory = [];
+
 /**
  * Handle submit form chat
  */
@@ -19,6 +22,10 @@ form.addEventListener('submit', async function (e) {
 
     // 1. Tampilkan pesan user ke UI
     appendMessage('user', userMessage);
+
+    // Simpan ke riwayat lokal
+    chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+
     input.value = '';
 
     // Matikan tombol saat loading
@@ -28,11 +35,14 @@ form.addEventListener('submit', async function (e) {
     const loadingId = appendLoadingMessage();
 
     try {
-        // 3. Panggil API ke Backend
+        // 3. Panggil API ke Backend dengan menyertakan history
         const response = await fetch('/generate-text', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userMessage })
+            body: JSON.stringify({
+                message: userMessage,
+                history: chatHistory.slice(0, -1) // Kirim riwayat sebelumnya (tanpa pesan terakhir yang baru ditambah)
+            })
         });
 
         const data = await response.json();
@@ -43,6 +53,9 @@ form.addEventListener('submit', async function (e) {
         if (data.success) {
             // 4. Tampilkan balasan asli dari Gemini
             appendMessage('bot', data.text);
+
+            // Simpan balasan bot ke riwayat lokal
+            chatHistory.push({ role: 'model', parts: [{ text: data.text }] });
         } else {
             appendMessage('bot', 'Maaf, saya sedang mengalami kendala teknis. Harap coba lagi nanti.');
         }

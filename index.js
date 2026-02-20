@@ -43,25 +43,32 @@ app.post("/generate-text", async (req, res) => {
       return res.status(400).json({ error: "Pesan (message) wajib diisi." });
     }
 
-    const aiResponse = await ai.models.generateContent({
+    // Initialize model with enhanced tech support persona
+    const model = ai.getGenerativeModel({
       model: "gemini-2.0-flash",
-      contents: message,
-      config: {
-        // Parameter Kreatif
-        temperature: 0.2, // Rendah untuk jawaban teknis yang lebih akurat/konsisten
-        topP: 0.8,
+      systemInstruction: "Anda adalah Technical Support Specialist yang sangat manusiawi, berempati, dan proaktif. Anda bukan sekadar bot, melainkan rekan teknis yang cerdas. Tugas Anda:\n1. Selesaikan masalah teknis (troubleshooting) secara akurat dan step-by-step.\n2. Pelajari konteks dari riwayat percakapan. Jika pengguna menanyakan hal yang serupa atau berkaitan, hubungkan jawaban Anda dengan topik sebelumnya secara natural.\n3. Berikan saran proaktif atau tips tambahan yang relevan dengan pertanyaan pengguna untuk mencegah masalah di masa depan.\n4. Gunakan gaya bahasa yang profesional namun hangat dan mengayomi (seperti mentor/senior dev). Hindari jawaban yang terlalu kaku atau repetitif.\n5. Selalu tutup jawaban Anda dengan pertanyaan yang memotivasi atau follow-up teknis untuk memastikan bantuan Anda sudah tuntas."
+    });
+
+    // Start a chat session with the provided history
+    const chat = model.startChat({
+      history: history || [],
+      generationConfig: {
+        temperature: 0.7, // Lebih tinggi sedikit agar bahasa lebih natural dan tidak robotik
+        topP: 0.9,
         topK: 40,
         maxOutputTokens: 1024,
-        systemInstruction: "Anda adalah Technical Support Specialist untuk tim internal perusahaan. Tugas Anda adalah membantu menyelesaikan masalah teknis sistem (troubleshooting), memberikan panduan step-by-step, dan menjelaskan konsep teknis secara jelas. Gunakan gaya bahasa yang formal, profesional, namun membantu. Fokus pada akurasi teknis dan solusi praktis."
       }
     });
+
+    const result = await chat.sendMessage(message);
+    const aiResponse = result.response;
 
     // Log full AI response as stringified JSON
     console.log("AI Response Object:", JSON.stringify(aiResponse, null, 2));
 
     res.json({
       success: true,
-      text: aiResponse.text,
+      text: aiResponse.text(),
       aiResponse: aiResponse // Kirim full response object ke client
     });
   } catch (error) {
