@@ -1,65 +1,98 @@
 import { GoogleGenAI } from "@google/genai";
-// import dan jalankan config() dari 'dotenv'
 import 'dotenv/config';
 import express from 'express';
 import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Setup __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // setup aplikasi
 const app = express();
 
 // setup AI agent-nya dengan Google Gemini API
-// secara default, GoogleGenAI akan mencari env yang bernama GEMINI_API_KEY
 const ai = new GoogleGenAI({});
 
 // setup middleware
-// multer
 const upload = multer();
-
-// untuk memproses semua request dengan header 'Content-Type' berupa 'application/json'
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// tambahkan routes
-app.get("/halo", (req, res) => {
-  res.json({ halo: "Bandung" });
+// tambahkan rute health check
+app.get("/api/health", (req, res) => {
+  return res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // implementasi Google Gemini API di sini
 // pakai method POST
 app.post("/generate-text", async (req, res) => {
-  const payload = req.body;
+  try {
+    const { message, history } = req.body;
 
-  const aiResponse = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: payload.message,
-    config: {
-      systemInstruction: "Tolong jawab dengan bahasa Jawa ya!"
+    if (!message) {
+      return res.status(400).json({ error: "Pesan (message) wajib diisi." });
     }
-  });
 
-  res.json(aiResponse.text);
+    const aiResponse = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: message,
+      config: {
+        // Parameter Kreatif
+        temperature: 0.2, // Rendah untuk jawaban teknis yang lebih akurat/konsisten
+        topP: 0.8,
+        topK: 40,
+        maxOutputTokens: 1024,
+        systemInstruction: "Anda adalah Technical Support Specialist untuk tim internal perusahaan. Tugas Anda adalah membantu menyelesaikan masalah teknis sistem (troubleshooting), memberikan panduan step-by-step, dan menjelaskan konsep teknis secara jelas. Gunakan gaya bahasa yang formal, profesional, namun membantu. Fokus pada akurasi teknis dan solusi praktis."
+      }
+    });
+
+    res.json({ success: true, text: aiResponse.text });
+  } catch (error) {
+    console.error("AI Error:", error);
+    res.status(500).json({ success: false, error: "Gagal memproses AI." });
+  }
 })
 
+// Rute untuk gambar tetap tersedia
 app.post("/generate-text-from-image", upload.single("image"), async (req, res) => {
-  const message = req.body.message;
-  const file = req.file;
+  try {
+    const message = req.body.message;
+    const file = req.file;
 
-  const base64File = file.buffer.toString("base64");
+    if (!file) return res.status(400).json({ error: "Gambar wajib diunggah." });
 
-  const aiResponse = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [
-      { text: message, type: "text" },
-      { inlineData: { data: base64File, mimeType: file.mimetype } }
-    ],
-    config: {
-      systemInstruction: "Tolong jawab dengan bahasa Jawa ya!"
-    }
-  });
+    const base64File = file.buffer.toString("base64");
 
-  res.json(aiResponse.text);
+    const aiResponse = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [
+        { text: message, type: "text" },
+        { inlineData: { data: base64File, mimeType: file.mimetype } }
+      ],
+      config: {
+        temperature: 0.1,
+        systemInstruction: "Anda adalah Technical Support Specialist yang sedang menganalisa screenshot error atau log sistem. Identifikasi masalahnya dan berikan solusi teknis yang tepat."
+      }
+    });
+
+    res.json({ success: true, text: aiResponse.text });
+  } catch (error) {
+    console.error("AI Error:", error);
+    res.status(500).json({ success: false, error: "Gagal memproses gambar." });
+  }
 })
+
+// Fallback ke index.html (Express 5 mewajibkan regex atau penamaan untuk wildcard)
+app.get(/(.*)/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // kita "dengarkan" request dari user
 app.listen(23000, () => {
-  console.log("I LOVE YOU 23000");
+  console.log("I LOVE YOU 23000 - Hacktiv8 Mentor AI is Online");
 });

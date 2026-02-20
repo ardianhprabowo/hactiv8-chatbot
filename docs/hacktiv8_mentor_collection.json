@@ -1,0 +1,47 @@
+{
+    "_type": "export",
+    "__export_format": 4,
+    "__export_date": "2026-02-20T12:35:00.000Z",
+    "resources": [
+        {
+            "_id": "wrk_tech_support",
+            "parentId": null,
+            "modified": 1708430760000,
+            "created": 1708430760000,
+            "name": "Technical Support AI Bot API",
+            "description": "API documentation for the Technical Support AI Bot",
+            "scope": "collection",
+            "_type": "workspace"
+        },
+        {
+            "_id": "env_local_tech",
+            "parentId": "wrk_tech_support",
+            "name": "Local Server",
+            "data": {
+                "base_url": "http://localhost:23000"
+            },
+            "_type": "environment"
+        },
+        {
+            "_id": "req_generate_tech",
+            "parentId": "wrk_hacktiv8_mentor",
+            "url": "{{ _.base_url }}/generate-text",
+            "name": "Generate Support Response",
+            "description": "Endpoint utama untuk berinteraksi dengan Technical Support AI.",
+            "method": "POST",
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n\t\"message\": \"Bagaimana cara mengatasi error 'Connection Timeout' pada server internal?\"\n}"
+            },
+            "_type": "request"
+        },
+        {
+            "_id": "req_health_check",
+            "parentId": "wrk_hacktiv8_mentor",
+            "url": "{{ _.base_url }}/api/health",
+            "name": "System Health Check",
+            "method": "GET",
+            "_type": "request"
+        }
+    ]
+}
