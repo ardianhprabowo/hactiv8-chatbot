@@ -9,14 +9,40 @@
 </head>
 
 <body>
+    <!-- Parallax Background Layers -->
+    <div class="parallax-bg layer-1"></div>
+    <div class="parallax-bg layer-2"></div>
+
     <div class="container">
-        <h1>Internal Tech Support</h1>
+        <header>
+            <div class="logo-section">
+                <img src="tech_support_logo.webp" alt="Tech Support Logo" id="tech-logo" class="logo" />
+                <div class="header-text">
+                    <h1>Internal Tech Support</h1>
+                    <span class="status-badge">Online & Human-Adaptive</span>
+                </div>
+            </div>
+            <button id="img-gen-toggle" title="Fitur Image Generation">🖼️</button>
+        </header>
+
         <div id="chat-box" class="chat-box">
             <div class="message bot">Halo! Saya adalah Technical Support Specialist internal. Ada yang bisa saya bantu
                 terkait kendala teknis atau troubleshooting sistem hari ini?</div>
         </div>
+
+        <!-- Image Generation Container (Hidden by default) -->
+        <div id="image-gen-container" class="hidden">
+            <div class="image-gen-header">
+                <h3>Image Generator</h3>
+                <button id="close-img-gen">×</button>
+            </div>
+            <input type="text" id="img-prompt" placeholder="Deskripsikan gambar teknis yang dibutuhkan..." />
+            <button id="generate-img-btn">Generate</button>
+            <div id="img-result"></div>
+        </div>
+
         <form id="chat-form">
-            <input type="text" id="user-input" placeholder="Tanyakan sesuatu pada mentor..." autocomplete="off"
+            <input type="text" id="user-input" placeholder="Ketik pesan teknis Anda di sini..." autocomplete="off"
                 required />
             <button type="submit" id="send-btn">Kirim</button>
         </form>
